@@ -7,6 +7,7 @@ class PlanSchema(ma.Schema):
     class Meta:
         model = Plan
 
+    id = ma.Str()
     name = ma.Str()
     price = ma.Str()
     created_at = ma.DateTime()
@@ -23,6 +24,6 @@ class PlanCreateSchema(ma.Schema):
         name = data.get("name")
         print("validating name ...")
         if Plan.query.filter_by(name=name).count():
-            raise ValidationError(f"Plan {name} already exists.")
+            raise ValidationError(f"Plan '{name}' already exists.")
 
 
