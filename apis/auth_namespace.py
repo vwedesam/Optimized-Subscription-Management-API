@@ -46,7 +46,16 @@ class UserAuth(Resource):
             return validation_error(err)
         
         email = json.get('email')
+        password = json.get('password')
         user = User.query.filter_by(email=email).first()
+
+        if user is None:
+            return { 'error': "Password or Email not correct." }, 400
+
+        is_valid = user.check_password(password)
+
+        if is_valid == False:
+            return { 'error': "Password or Email not correct." }, 400
 
         auth_token = auth_manager.auth_token(user.id)
 
