@@ -20,6 +20,7 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 * Flask-Bcrypt - password hashing and validation
 * Flask-Migrate - QLAlchemy database migrations
 * SQLite or MySQL/MariaDB
+* Flask_PyJWT - API Authentication(JWT) and token management
 
 ### Project Structure
 
@@ -58,30 +59,34 @@ python app.py
 
 To initialize the database:
 
-```python
+```sh
+$ flask db init # This will add a migrations folder to your application
 
+$ flask db migrate -m "Initial migration."  # generate an initial migration
+
+$ flask db upgrade # apply the changes to DB
 ```
 
 ## API Documentation
 Swagger UI available at:
 
 ```bash
-http://localhost:5000/apidocs
+http://localhost:5000/api-docs
 ```
 
 ### API Endpoints
 1. Auth
-    1. Register user -  POST `/auth/register-user`
-    2. login - POST `/auth/login`
+    1. Register user -  POST `/api/auth/register-user`
+    2. login - POST `/api/auth/login`
 2. Plan
-    1. List plans - GET `/plans`
-    2. Create subscription plan - POST `/plans`
+    1. List plans - GET `/api/plans`
+    2. Create subscription plan - POST `/api/plans`
 3. Subscription
-    1. List subscriptions - GET `/subscriptions`
-    2. Create new subscription - POST `/subscriptions`
-    3. Get auth user active subscription - GET `/subscriptions/active`
-    4. Upgrade subscription - PUT `/subscriptions/upgrade`
-    5. Cancel subscription - PATCH `/subscriptions/<sub_id>/cancel`
+    1. List subscriptions - GET `/api/subscriptions`
+    2. Create new subscription - POST `/api/subscriptions`
+    3. Get auth user active subscription - GET `/api/subscriptions/active`
+    4. Upgrade subscription - PUT `/api/subscriptions/upgrade`
+    5. Cancel subscription - PATCH `/api/subscriptions/<sub_id>/cancel`
 
 
 ### Model Definition

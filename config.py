@@ -6,7 +6,10 @@ database_url = os.getenv('DATABASE_URL', None)
 sqlite_database_url = 'sqlite:///' + os.path.join(basedir, 'sqlite.db')
 
 class Config:
-    JWT_SECRET_KEY = os.getenv('SECRET_KEY', '@#$%^&*_secret_key')
+    JWT_ISSUER = "subscription-management"
+    JWT_AUTHTYPE = "HS256"
+    JWT_REFRESH_MAXAGE = 60 * 60 * 1  # 1 hour
+    JWT_SECRET = os.getenv('SECRET_KEY', '@#$%^&*_secret_key')
     DEBUG = False
 
 
@@ -18,7 +21,6 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     DEBUG = True
-    TESTING = True
     SQLALCHEMY_DATABASE_URI = sqlite_database_url
     PRESERVE_CONTEXT_ON_EXCEPTION = False
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -35,4 +37,3 @@ config_by_env = dict(
     prod=ProductionConfig
 )
 
-jwt_key = Config.JWT_SECRET_KEY
