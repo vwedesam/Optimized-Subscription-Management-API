@@ -1,6 +1,6 @@
 from core.extensions import ma
 from models import Plan
-from marshmallow.fields import String, Integer
+from marshmallow.fields import String, Float
 from marshmallow import ValidationError, validates_schema, validate
 
 class PlanSchema(ma.Schema):
@@ -9,7 +9,7 @@ class PlanSchema(ma.Schema):
 
     id = ma.Str()
     name = ma.Str()
-    price = ma.Str()
+    price = ma.Float()
     created_at = ma.DateTime()
 
 class PlanCreateSchema(ma.Schema):
@@ -17,7 +17,7 @@ class PlanCreateSchema(ma.Schema):
         model = Plan
 
     name = String(required=True, validate=[validate.Length(min=3)])
-    price = Integer(required=True)
+    price = Float(required=True)
 
     @validates_schema
     def validate_name(self, data, **kwargs):

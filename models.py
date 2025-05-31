@@ -2,6 +2,7 @@ from core.extensions import db, flask_bcrypt
 from datetime import datetime
 
 class User(db.Model):
+    __tablename__ = 'users'
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(120), unique=True, nullable=False)
     first_name = db.Column(db.String(120), nullable=False)
@@ -23,6 +24,7 @@ class User(db.Model):
 
     
 class Plan(db.Model):
+    __tablename__ = 'plans'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)  # Free, Basic, Pro
     price = db.Column(db.Numeric(10, 2), nullable=False)
@@ -30,6 +32,7 @@ class Plan(db.Model):
     subscriptions = db.relationship('Subscription', backref='plan', lazy=True)
 
 class Subscription(db.Model):
+    __tablename__ = 'subscriptions'
     id = db.Column(db.Integer, primary_key=True)
     price = db.Column(db.Numeric(10, 2), nullable=False)
     name = db.Column(db.String(50), nullable=False)
@@ -39,11 +42,4 @@ class Subscription(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     plan_id = db.Column(db.Integer, db.ForeignKey('plan.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
-
-    def is_current(self):
-        return self.is_active and self.end_date > datetime.now()
-
-    def cancel(self):
-        self.is_active = False
-        self.end_date = datetime.now()
 

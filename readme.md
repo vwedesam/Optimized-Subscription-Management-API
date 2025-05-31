@@ -20,7 +20,7 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 * Flask-Bcrypt - password hashing and validation
 * Flask-Migrate - QLAlchemy database migrations
 * SQLite or MySQL/MariaDB
-* Flask_PyJWT - API Authentication(JWT) and token management
+* Flask_JWT_EXTENDED - API Authentication(JWT) and token management
 
 ### Project Structure
 
@@ -88,6 +88,9 @@ http://localhost:5000/api-docs
     4. Upgrade subscription - PUT `/api/subscriptions/upgrade`
     5. Cancel subscription - PATCH `/api/subscriptions/<sub_id>/cancel`
 
+>**Note**: for the subscription plans we assume it's a monthly subscription billing model not annually.
+
+>`start_date` and `end_date` are automatically prefilled for a period of 30 days
 
 ### Model Definition
 - **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=datetime)
@@ -100,6 +103,11 @@ http://localhost:5000/api-docs
 - The subscription model is made to be self sufficient by adding `plan_name` and `price` column 
 - by adding these columns, whenever an active subscription is queried, expensive joins are avoided, just one records that contains everything there is for subscription is returned
 
+2. **Table Index**
+    1. single column index `user_id, created_at DESC` - used when retrieving list of subscription
+    2. multiple column index `user_id, is_active, end_date, created_at DESC` - used when retrieving active subscription
+
+3. **Query Optimization**
 
 
 
