@@ -5,7 +5,8 @@ from models import User
 from marshmallow import ValidationError
 from core.schema.user_schema import UserLoginSchema, UserRegisterSchema, UserSchema
 from core.error_handler import validation_error
-from core.extensions import db, auth_manager
+from core.extensions import db
+from flask_jwt_extended import create_access_token
 
 api = Namespace('auth')
 
@@ -57,10 +58,10 @@ class UserAuth(Resource):
         if is_valid == False:
             return { 'error': "Password or Email not correct." }, 400
 
-        auth_token = auth_manager.auth_token(user.id)
+        auth_token = create_access_token(str(user.id))
 
         return {
-            "token": auth_token.signed
+            "token": auth_token
         }
     
     

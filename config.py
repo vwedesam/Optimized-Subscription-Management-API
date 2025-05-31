@@ -6,10 +6,8 @@ database_url = os.getenv('DATABASE_URL', None)
 sqlite_database_url = 'sqlite:///' + os.path.join(basedir, 'sqlite.db')
 
 class Config:
-    JWT_ISSUER = "subscription-management"
-    JWT_AUTHTYPE = "HS256"
-    JWT_REFRESH_MAXAGE = 60 * 60 * 1  # 1 hour
-    JWT_SECRET = os.getenv('SECRET_KEY', '@#$%^&*_secret_key')
+    JWT_ACCESS_TOKEN_EXPIRES = 60 * 60 * 1  # 1 hour
+    JWT_SECRET_KEY = os.getenv('SECRET_KEY', '@#$%^&*_secret_key')
     DEBUG = False
 
 
