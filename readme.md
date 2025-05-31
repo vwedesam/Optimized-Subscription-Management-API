@@ -15,10 +15,11 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 ### Tech Stack
 
 * Python 3.x
-* Flask (Flask-SQLAlchemy, Flask-RESTPlus, Flask_Script, )
-* Flask-Bcrypt for password hashing and validation
+* Flask (Flask-SQLAlchemy)
+* Flask-RESTPlus - Restful API and Swagger doc
+* Flask-Bcrypt - password hashing and validation
+* Flask-Migrate - QLAlchemy database migrations
 * SQLite or MySQL/MariaDB
-
 
 ### Project Structure
 
@@ -42,6 +43,8 @@ Create a `.env` file to store sensitive config like database URL, ....
 
 ```env
 FLASK_APP=app.py
+FLASK_DEBUG=true
+ENV=dev
 DATABASE_URL=sqlite:///db.sqlite3
 ```
 
@@ -67,13 +70,30 @@ http://localhost:5000/apidocs
 ```
 
 ### API Endpoints
+1. Auth
+    1. Register user -  POST `/auth/register-user`
+    2. login - POST `/auth/login`
+2. Plan
+    1. List plans - GET `/plans`
+    2. Create subscription plan - POST `/plans`
+3. Subscription
+    1. List subscriptions - GET `/subscriptions`
+    2. Create new subscription - POST `/subscriptions`
+    3. Get auth user active subscription - GET `/subscriptions/active`
+    4. Upgrade subscription - PUT `/subscriptions/upgrade`
+    5. Cancel subscription - PATCH `/subscriptions/<sub_id>/cancel`
 
-.....
 
+### Model Definition
+- **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=datetime)
+- **Plan**(`id`=int, `name`=str, `price`=str, `created_at`=datetime)
+- **Subscription**(`id`=int, `name`=str, `price`=str, `start_date`=datetime, `end_date`=datetime, `is_active`=bool, `plan_id`=str, `user_id`=str, `created_at`=datetime)
 
-### Query Optimization Documentation
+### Optimization Documentation
 
-
+1. **Table Denormalization**
+- The subscription model is made to be self sufficient by adding `plan_name` and `price` column 
+- by adding these columns, whenever an active subscription is queried, expensive joins are avoided, just one records that contains everything there is for subscription is returned
 
 
 
