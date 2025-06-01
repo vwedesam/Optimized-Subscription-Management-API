@@ -25,7 +25,7 @@ class AuthTest(flask_unittest.ClientTestCase):
 
 
         json = response.json
-        # assert error code
+        # assert status code
         assert response.status_code == 422
         assert "errors" in json
         # asset the errors return contains required field error 
@@ -46,7 +46,7 @@ class AuthTest(flask_unittest.ClientTestCase):
 
         json = response.json
 
-        # assert error code
+        # assert status code
         assert response.status_code == 200
         # asset user model fields are present
         assert "email" in json
@@ -65,7 +65,7 @@ class AuthTest(flask_unittest.ClientTestCase):
 
         json = response.json
 
-        # assert error code
+        # assert status code
         assert response.status_code == 400
         # asset error field and message are present
         assert "error" in json
@@ -89,7 +89,7 @@ class AuthTest(flask_unittest.ClientTestCase):
 
         json = response.json
 
-        # assert error code
+        # assert status code
         assert response.status_code in [200, 201]
         # asset token is present
         assert "token" in json
