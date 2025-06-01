@@ -16,11 +16,13 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 
 * Python 3.x
 * Flask (Flask-SQLAlchemy)
-* Flask-RESTPlus - Restful API and Swagger doc
+* Flask-RESTX - Restful API and Swagger doc
 * Flask-Bcrypt - password hashing and validation
 * Flask-Migrate - QLAlchemy database migrations
 * SQLite or MySQL/MariaDB
-* Flask_JWT_EXTENDED - API Authentication(JWT) and token management
+* Flask-JWT-EXTENDED - API Authentication(JWT) and token management
+* marshmallow(FLASK-MARSHMALLOW, MARSHMALLOW-SQLAlchemy) - validate, serialization and deserialization
+* FLASK_UNITTEST - for testing
 
 ### Project Structure
 
@@ -57,6 +59,12 @@ flask run
 python app.py
 ```
 
+### Run Test
+
+```bash
+python -m unittest
+```
+
 To initialize the database:
 
 ```sh
@@ -81,16 +89,18 @@ http://localhost:5000/api-docs
 2. Plan
     1. List plans - GET `/api/plans`
     2. Create subscription plan - POST `/api/plans`
-3. Subscription
+3. Subscription (`Require Authentication`)
     1. List subscriptions - GET `/api/subscriptions`
     2. Create new subscription - POST `/api/subscriptions`
     3. Get auth user active subscription - GET `/api/subscriptions/active`
     4. Upgrade subscription - PUT `/api/subscriptions/upgrade`
-    5. Cancel subscription - PATCH `/api/subscriptions/<sub_id>/cancel`
+    5. Cancel subscription - PATCH `/api/subscriptions/cancel`
 
->**Note**: for the subscription plans we assume it's a monthly subscription billing model not annually.
+>**Note**: When creating subscription plan we assume it's a monthly subscription billing model not annually.
 
 >`start_date` and `end_date` are automatically prefilled for a period of 30 days
+
+> A `user` can only have one active `subscription` at a time
 
 ### Model Definition
 - **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=datetime)
@@ -100,14 +110,16 @@ http://localhost:5000/api-docs
 ### Optimization Documentation
 
 1. **Table Denormalization**
-- The subscription model is made to be self sufficient by adding `plan_name` and `price` column 
-- by adding these columns, whenever an active subscription is queried, expensive joins are avoided, just one records that contains everything there is for subscription is returned
+    - The subscription model is made to be self sufficient by adding `plan_name` and `price` column 
+    - by adding these columns, whenever an active subscription is queried, expensive joins are avoided, just one records that contains everything there is for subscription is returned
 
 2. **Table Index**
-    1. single column index `user_id, created_at DESC` - used when retrieving list of subscription
-    2. multiple column index `user_id, is_active, end_date, created_at DESC` - used when retrieving active subscription
+    1. `user_id, created_at DESC` - used when retrieving list of subscription
+    2. `user_id, is_active, end_date, created_at DESC` - used when retrieving active subscription
+    3. `user_id, is_active` - used when retrieving active subscription to be canceled
 
 3. **Query Optimization**
+
 
 
 

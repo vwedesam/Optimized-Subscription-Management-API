@@ -9,7 +9,7 @@ class User(db.Model):
     last_name = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
-    subscriptions = db.relationship('Subscription', backref='user', lazy=True)
+    subscriptions = db.relationship('Subscription', backref='users', lazy=True)
 
     @property
     def password(self):
@@ -29,7 +29,7 @@ class Plan(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)  # Free, Basic, Pro
     price = db.Column(db.Numeric(10, 2), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
-    subscriptions = db.relationship('Subscription', backref='plan', lazy=True)
+    subscriptions = db.relationship('Subscription', backref='plans', lazy=True)
 
 class Subscription(db.Model):
     __tablename__ = 'subscriptions'
@@ -39,7 +39,7 @@ class Subscription(db.Model):
     start_date = db.Column(db.DateTime, default=datetime.now())
     end_date = db.Column(db.DateTime, nullable=False)
     is_active = db.Column(db.Boolean, default=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    plan_id = db.Column(db.Integer, db.ForeignKey('plan.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now())
 
