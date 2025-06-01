@@ -60,7 +60,7 @@ class PlanTest(flask_unittest.ClientTestCase):
     
         assert response.status_code in [200, 201]
         assert len(json) == 1
-        # # asset plan model fields are present
+        # asset plan model fields are present
         assert "id" in json[0]
         assert "name" in json[0]
         assert "price" in json[0]

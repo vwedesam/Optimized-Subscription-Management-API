@@ -26,7 +26,7 @@ class SubscriptionResource(Resource):
 
         sql = text("""
             SELECT *
-            FROM subscription
+            FROM subscriptions
             WHERE user_id = :user_id
             ORDER BY created_at DESC
             LIMIT :limit 
@@ -88,7 +88,7 @@ class subscriptionActive(Resource):
 
         sql = text("""
             SELECT *
-            FROM subscription
+            FROM subscriptions
             WHERE user_id = :user_id
             AND is_active = TRUE
             AND end_date > :now

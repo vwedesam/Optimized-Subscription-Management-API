@@ -16,7 +16,7 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 
 * Python 3.x
 * Flask (Flask-SQLAlchemy)
-* Flask-RESTX - Restful API and Swagger doc
+* Flask-RESTX - Restful API
 * Flask-Bcrypt - password hashing and validation
 * Flask-Migrate - QLAlchemy database migrations
 * SQLite or MySQL/MariaDB
@@ -73,13 +73,6 @@ $ flask db init # This will add a migrations folder to your application
 $ flask db migrate -m "Initial migration."  # generate an initial migration
 
 $ flask db upgrade # apply the changes to DB
-```
-
-## API Documentation
-Swagger UI available at:
-
-```bash
-http://localhost:5000/api-docs
 ```
 
 ### API Endpoints
