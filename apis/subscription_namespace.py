@@ -13,33 +13,51 @@ api = Namespace('subscriptions')
 
 @api.route('')
 class SubscriptionResource(Resource):
-    @api.doc('list-subscriptions')
+    @api.doc('subscriptions-history')
     @jwt_required()
     def get(self):
-        '''Retrieve a list of all subscriptions'''
+        '''Retrieve subscription history'''
         user_id = get_jwt_identity()
 
-         # Pagination result (fallback to page 1, 10 items per page)
-        page = int(request.args.get("page", 1))
+        # Pagination result using cursor-based pattern
+        last_seen_id = int(request.args.get("last_seen_id", 0))
         per_page = int(request.args.get("per_page", 10))
-        offset = (page - 1) * per_page
 
-        sql = text("""
+        params = {
+            "user_id": int(user_id),
+            "limit": per_page
+        }
+
+        sql = """
             SELECT *
             FROM subscriptions
             WHERE user_id = :user_id
+        """
+
+        if last_seen_id:
+            # fetch records created before the last_seen_id
+            sql += "AND id < :last_seen_id"
+            params["last_seen_id"] = last_seen_id
+
+        sql += """
             ORDER BY created_at DESC
             LIMIT :limit 
-            OFFSET :offset
-        """)
+        """
 
-        subscriptions = db.session.execute(sql, {"user_id": user_id, "limit": per_page, "offset": offset}).all()
+        sql = text(sql)
+
+        subscriptions = db.session.execute(sql, params).all()
 
         schema = SubscriptionSchema(many=True)
+        subscriptions_list = schema.dump(subscriptions)
+
+        # get the id of last subscription in the list
+        last_seen_id = subscriptions_list[-1].get("id") if len(subscriptions_list) else None
+
         return {
-            'data': schema.dump(subscriptions),
-            "current_page": page,
-            "per_page": per_page
+            'data': subscriptions_list,
+            "per_page": per_page,
+            "next_cursor_id": last_seen_id
         }
     
     @api.doc('create-subscription')

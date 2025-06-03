@@ -24,12 +24,6 @@ A simple Flask-based optimized API for user registration, authentication, and ma
 * marshmallow(FLASK-MARSHMALLOW, MARSHMALLOW-SQLAlchemy) - validate, serialization and deserialization
 * FLASK_UNITTEST - for testing
 
-### Project Structure
-
-```bash
-
-```
-
 ### Installation
 
 ```bash
@@ -77,23 +71,35 @@ $ flask db upgrade # apply the changes to DB
 
 ### API Endpoints
 1. Auth
-    1. Register user -  POST `/api/auth/register-user`
-    2. login - POST `/api/auth/login`
+    1. Register user -  POST `/api/auth/register-user` | PAYLOAD - `{ 'last_name', 'first_name', 'email', 'password' }`
+    2. login - POST `/api/auth/login` | PAYLOAD - `{ 'email', 'password' }`
 2. Plan
     1. List plans - GET `/api/plans`
-    2. Create subscription plan - POST `/api/plans`
-3. Subscription (`Require Authentication`)
-    1. List subscriptions - GET `/api/subscriptions`
-    2. Create new subscription - POST `/api/subscriptions`
+    2. Create subscription plan - POST `/api/plans` | PAYLOAD - `{ 'name', 'price' }`
+3. Subscription (`Require Authentication - Bearer {token}`)
+    1. Retrieve subscription history - GET `/api/subscriptions` | Query(optional) - `{ 'per_page', 'last_seen_id' }`
+    2. Create new subscription - POST `/api/subscriptions` | PAYLOAD - `{ 'plan_id' }`
     3. Get auth user active subscription - GET `/api/subscriptions/active`
-    4. Upgrade subscription - PUT `/api/subscriptions/upgrade`
-    5. Cancel subscription - PATCH `/api/subscriptions/cancel`
+    4. Upgrade subscription - PUT `/api/subscriptions/upgrade` | PAYLOAD - `{ 'plan_id' }`
+    5. Cancel active subscription - PATCH `/api/subscriptions/cancel`
 
->**Note**: When creating subscription plan we assume it's a monthly subscription billing model not annually.
-
->`start_date` and `end_date` are automatically prefilled for a period of 30 days
-
-> A `user` can only have one active `subscription` at a time
+> **Note**:
+>
+> * Subscription plans assume a **monthly billing model**, not annual.
+> * `start_date` and `end_date` are **automatically set** for a 30-day period.
+> * A `user` can only have **one active subscription** at a time.
+---
+### Authentication
+1. **Login** with `email` and `password` via:
+```
+POST /api/auth/login
+```
+2. You’ll get a **JWT token** in the response.
+3. Use the token in the `Authorization` header for all subscription endpoints:
+```
+Authorization: Bearer <token>
+```
+---
 
 ### Model Definition
 - **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=datetime)
@@ -103,16 +109,30 @@ $ flask db upgrade # apply the changes to DB
 ### Optimization Documentation
 
 1. **Table Denormalization**
-    - The subscription model is made to be self sufficient by adding `plan_name` and `price` column 
-    - by adding these columns, whenever an active subscription is queried, expensive joins are avoided, just one records that contains everything there is for subscription is returned
 
-2. **Table Index**
-    1. `user_id, created_at DESC` - used when retrieving list of subscription
-    2. `user_id, is_active, end_date, created_at DESC` - used when retrieving active subscription
-    3. `user_id, is_active` - used when retrieving active subscription to be canceled
+   * The `subscriptions` table is made self-sufficient by including the `name` and `price` columns.
+   * With these columns present, querying for an active subscription doesn't require any expensive join—just one record with all the necessary details is returned.
+
+2. **Table Indexes**
+
+   * `idx_user_id_created_at (user_id, created_at DESC)`
+     → Used when retrieving subscription history.
 
 3. **Query Optimization**
 
+   1. **Retrieving subscription history:** 
+    * After careful analysis, I decided **not** to use `OFFSET` for pagination since it prevents MySQL from using the (`user_id, created_at DESC`) index efficiently.
+    * Instead, I used the **cursor-based pattern**, which allows the index to be fully utilized.
+
+   **Optimized Query Used**
+   ```sql
+   SELECT *
+   FROM subscriptions
+   WHERE user_id = :user_id
+     AND id < :last_seen_id
+   ORDER BY created_at DESC
+   LIMIT :limit
+   ```
 
 
 

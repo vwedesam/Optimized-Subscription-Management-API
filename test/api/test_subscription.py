@@ -121,7 +121,7 @@ class SubscriptionTest(flask_unittest.ClientTestCase):
         json = response.json
         # assert status code
         assert response.status_code == 200
-        assert "current_page" in json
+        assert "next_cursor_id" in json
         assert "per_page" in json
         data = json.get('data')
         assert len(data) == 1
