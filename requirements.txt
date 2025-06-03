@@ -28,6 +28,7 @@ packaging==25.0
 pluggy==1.6.0
 pycparser==2.22
 PyJWT==2.10.1
+PyMySQL==1.1.1
 python-dotenv==0.21.1
 pytz==2025.2
 referencing==0.36.2
