@@ -23,7 +23,7 @@ class UserRegister(Resource):
         except ValidationError as err:
             return validation_error(err)
 
-        created_at = datetime.now()
+        created_at = int(datetime.now().timestamp())
         user = User(**valid_user_request, created_at=created_at)
         # add to session and commit
         db.session.add(user)

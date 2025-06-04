@@ -9,24 +9,28 @@ with app.app_context():
     db.create_all()
 
     # 1. Seed Plans
-    free_plan = Plan(name="Free", price=0)
-    premium_plan = Plan(name="Premium", price=200)
+    free_plan = Plan(name="Free", price=0, created_at=int(datetime.now().timestamp()))
+    premium_plan = Plan(name="Premium", price=200, created_at=int(datetime.now().timestamp()))
     db.session.add_all([free_plan, premium_plan])
     db.session.commit()
 
     # 2. Seed User
-    user = User(last_name="samuel", first_name="vwede", email="samuel@vwede.com", password="password")
+    user = User(last_name="samuel", first_name="vwede", email="samuel@vwede.com", password="password", created_at=int(datetime.now().timestamp()))
     db.session.add(user)
     db.session.commit()
 
-    # Seed 50 Subscriptions
+    # Seed 5000 Subscriptions
     subscriptions = []
-    for i in range(1, 51):
+    for i in range(1, 5000):
         plan = random.choice([free_plan, premium_plan])
-        days_ago = 51 - i # generate data in ascending order
-        start_date = datetime.now() - timedelta(days=days_ago)
+        days_ago = 5001 - i # generate data in ascending order
+
+        start_date = (datetime.now() - timedelta(days=days_ago))
         end_date = start_date + timedelta(days=30)
-        is_active = end_date > datetime.now()
+
+        start_date = int(start_date.timestamp())
+        end_date = int(end_date.timestamp())
+        is_active = int(end_date > datetime.now().timestamp())
 
         sub = Subscription(
             name=plan.name,

@@ -32,7 +32,7 @@ class plan(Resource):
         except ValidationError as err:
             return validation_error(err)
 
-        created_at = datetime.now()
+        created_at = int(datetime.now().timestamp())
         plan = Plan(**valid_plan_request, created_at=created_at)
         # add to session and commit
         db.session.add(plan)
