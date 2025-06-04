@@ -13,6 +13,7 @@ class Config:
 
 class DevelopmentConfig(Config):
     DEBUG = True
+    SQLALCHEMY_ECHO = True # log query
     SQLALCHEMY_DATABASE_URI = database_url or sqlite_database_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

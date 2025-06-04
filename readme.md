@@ -34,6 +34,17 @@ $ source venv/bin/activate  # on Windows: venv\Scripts\activate
 $ pip install -r requirements.txt
 ```
 
+### Project Structure
+
+```sh
+|_ apis
+|_ core
+|_ migrations
+|_ test
+|_ app.py
+|_ ....
+```
+
 ### Environment Variables (Optional)
 
 Create a `.env` file to store sensitive config like database URL, ....
@@ -59,7 +70,7 @@ python app.py
 python -m unittest
 ```
 
-To initialize the database:
+### To initialize the database:
 
 ```sh
 $ flask db init # This will add a migrations folder to your application
@@ -95,16 +106,17 @@ $ flask db upgrade # apply the changes to DB
 POST /api/auth/login
 ```
 2. You’ll get a **JWT token** in the response.
-3. Use the token in the `Authorization` header for all subscription endpoints:
+3. Use the token in the `Authorization` header for all `subscription` endpoints:
 ```
+Content-Type: application/json
 Authorization: Bearer <token>
 ```
 ---
 
 ### Model Definition
-- **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=datetime)
-- **Plan**(`id`=int, `name`=str, `price`=str, `created_at`=datetime)
-- **Subscription**(`id`=int, `name`=str, `price`=str, `start_date`=datetime, `end_date`=datetime, `is_active`=bool, `plan_id`=str, `user_id`=str, `created_at`=datetime)
+- **User**(`id`=int, `email`=str, `first_name`=str, `last_name`=str, `password_hash`=str, `created_at`=int)
+- **Plan**(`id`=int, `name`=str, `price`=str, `created_at`=int)
+- **Subscription**(`id`=int, `name`=str, `price`=str, `start_date`=int, `end_date`=int, `is_active`=bool, `plan_id`=str, `user_id`=str, `created_at`=int)
 
 ### Optimization Documentation
 
@@ -115,16 +127,22 @@ Authorization: Bearer <token>
 
 2. **Table Indexes**
 
-   * `idx_user_id_created_at (user_id, created_at DESC)`
-     → Used when retrieving subscription history.
+    * idx_user_id_is_active_end_date_created_at(`user_id`, `is_active`, `end_date`, `created_at DESC`)
+    
+    - Used when retrieving subscription history.
+    - Used for retrieving active subscription
 
-3. **Query Optimization**
+3. **Optimizing Date Indexing with Timestamps**
+
+    * Because of how MySQL handles time and date values, index with columns `created_at, end_date` didn’t work well — so I used an `Integer/unix` timestamp instead for those columns for better performance.
+
+4. **Query Optimization**
 
    1. **Retrieving subscription history:** 
-    * After careful analysis, I decided **not** to use `OFFSET` for pagination since it prevents MySQL from using the (`user_id, created_at DESC`) index efficiently.
+    * I decided **not** to use `OFFSET` for pagination since it prevents MySQL from using index efficiently.
     * Instead, I used the **cursor-based pattern**, which allows the index to be fully utilized.
 
-   **Optimized Query Used**
+   **Optimized retrieving subscription history query**
    ```sql
    SELECT *
    FROM subscriptions
@@ -133,6 +151,36 @@ Authorization: Bearer <token>
    ORDER BY created_at DESC
    LIMIT :limit
    ```
+   >Note: whenever `id` is present in a query `mysql` prioritize `PRIMARY` index
+   2. **Retrieve Active subscription:** 
+    * The query fetches the most recent active subscription for a user, ensuring it is currently valid (`is_active` = `TRUE` and `end_date` > now(millisecond/unix timestamp)).
 
+    * It uses the (`user_id`, `is_active`, `end_date`, `created_at DESC`) composite index to efficiently filter and order results, avoiding full table scans.
 
+   **Optimized retrieve active subscription query**
+   ```sql
+    SELECT *
+    FROM subscriptions
+    WHERE user_id = :user_id
+    AND is_active = TRUE
+    AND end_date > :now
+    ORDER BY created_at DESC
+    LIMIT 1
+   ```
+
+### **Optimized Index and Query Strategy**
+
+To support both **active subscription retrieval** and **subscription history with pagination**, we use a composite index:
+`(user_id, is_active, end_date, created_at DESC)`.
+
+This allows efficient cursor-based lookups and minimizes table scans.
+
+Thanks to **MySQL's leftmost prefix rule**, the index can still be used for queries that only filter on:
+
+* `user_id`
+* `user_id, is_active`
+* `user_id, is_active, end_date`
+* and so on—up to the full combination.
+
+For performance-critical paths, raw SQL is used to fully leverage index order and avoid `OFFSET`
 

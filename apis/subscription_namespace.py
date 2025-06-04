@@ -11,6 +11,16 @@ from models import Subscription, Plan
 
 api = Namespace('subscriptions')
 
+active_subscription_query = text("""
+            SELECT *
+            FROM subscriptions
+            WHERE user_id = :user_id
+            AND is_active = TRUE
+            AND end_date > :now
+            ORDER BY created_at DESC
+            LIMIT 1
+        """)
+
 @api.route('')
 class SubscriptionResource(Resource):
     @api.doc('subscriptions-history')
@@ -35,7 +45,7 @@ class SubscriptionResource(Resource):
         """
 
         if last_seen_id:
-            # fetch records created before the last_seen_id
+            # Fetch records created before the last_seen_id
             sql += "AND id < :last_seen_id"
             params["last_seen_id"] = last_seen_id
 
@@ -51,7 +61,7 @@ class SubscriptionResource(Resource):
         schema = SubscriptionSchema(many=True)
         subscriptions_list = schema.dump(subscriptions)
 
-        # get the id of last subscription in the list
+        # Get the id of last subscription in the list
         last_seen_id = subscriptions_list[-1].get("id") if len(subscriptions_list) else None
 
         return {
@@ -81,14 +91,17 @@ class SubscriptionResource(Resource):
         if plan is None:
             return { 'error': f"Plan with id '{plan_id}' does not exists." }, 400
         
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=30) # Add extra 30 days
+
         name = plan.name
         price = plan.price
-        start_date = datetime.now()
-        end_date = start_date + timedelta(days=30)
-        created_at = datetime.now()
+        start_date = int(start_date.timestamp())
+        end_date = int(end_date.timestamp())
+        created_at = int(datetime.now().timestamp())
 
         subscription = Subscription(plan_id=plan_id, name=name, price=price, is_active=True, user_id=user_id, start_date=start_date, end_date=end_date, created_at=created_at)
-        # add to session and commit
+        # Add to session and commit
         db.session.add(subscription)
         db.session.commit()
         schema = SubscriptionSchema()   
@@ -102,17 +115,9 @@ class subscriptionActive(Resource):
         '''Retrieve the currently active subscription for the user'''
 
         user_id = get_jwt_identity()
-        now = datetime.now()
+        now = int(datetime.now().timestamp())
 
-        sql = text("""
-            SELECT *
-            FROM subscriptions
-            WHERE user_id = :user_id
-            AND is_active = TRUE
-            AND end_date > :now
-            ORDER BY created_at DESC
-            LIMIT 1
-        """)
+        sql = active_subscription_query
 
         active_subscription = db.session.execute(sql, {"user_id": user_id, "now": now}).first()
 
@@ -146,30 +151,42 @@ class subscriptionUpgrade(Resource):
         if plan is None:
             return { 'error': f"Plan with id '{plan_id}' does not exists." }, 400
         
-        active_subscription = Subscription.query.filter_by(user_id=user_id, is_active=True).first()
+        sql = active_subscription_query
+        now = int(datetime.now().timestamp())
+
+        active_subscription = db.session.execute(sql, {"user_id": user_id, "now": now}).first()
 
         if active_subscription is None:
             return { 'error': f"No active subscription found." }, 404
 
-        active_subscription.is_active = False
-        active_subscription.end_date = datetime.now()
-
-        # Check if ew plan is the same as current plan
+        # Check if new plan is the same as current plan
         if int(active_subscription.plan_id) == int(plan_id):
             return { "error": "You're already on this subscription plan. Please select a different plan to upgrade."}, 400
 
+        # Update/end current plan
+        update_sql = text("""
+            UPDATE subscriptions
+            SET is_active = FALSE, end_date = :now
+            WHERE id = :id
+        """)
+        db.session.execute(update_sql, {"id": active_subscription.id, "now": now})
+
+        start_date = datetime.now()
+        end_date = start_date + timedelta(days=30) # Add extra 30 days
+
         name = plan.name
         price = plan.price
-        start_date = datetime.now()
-        end_date = start_date + timedelta(days=30)
-        created_at = datetime.now()
+        start_date = int(start_date.timestamp())
+        end_date = int(end_date.timestamp())
+        created_at = int(datetime.now().timestamp())
 
         subscription = Subscription(plan_id=plan_id, name=name, price=price, is_active=True, user_id=user_id, start_date=start_date, end_date=end_date, created_at=created_at)
-        # add to session and commit
+        # Add to session and commit
         db.session.add(subscription)
         db.session.commit()
         schema = SubscriptionSchema()
         return schema.dump(subscription)
+
 
 @api.route('/cancel')
 class subscriptionCancel(Resource):
@@ -179,14 +196,21 @@ class subscriptionCancel(Resource):
         '''Cancel the current active subscription'''
 
         user_id = get_jwt_identity()
+        sql = active_subscription_query
+        now = int(datetime.now().timestamp())
 
-        current_subscription = Subscription.query.filter_by(user_id=user_id, is_active=True).first()
-
+        current_subscription = db.session.execute(sql, {"user_id": user_id, "now": now}).first()
+    
         if current_subscription:
-            current_subscription.is_active = False
-            current_subscription.end_date = datetime.now()
-
-        db.session.commit()
+            # Updated/end current active subscription
+            update_sql = text("""
+                UPDATE subscriptions
+                SET is_active = false,
+                    end_date = :now
+                WHERE id = :id
+            """)
+            db.session.execute(update_sql, {"id": current_subscription.id, "now": now})
+            db.session.commit()
 
         return {
             "success": "ok"

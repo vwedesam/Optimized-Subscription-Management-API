@@ -1,5 +1,4 @@
 from core.extensions import db, flask_bcrypt
-from datetime import datetime
 
 class User(db.Model):
     __tablename__ = 'users'
@@ -8,7 +7,7 @@ class User(db.Model):
     first_name = db.Column(db.String(120), nullable=False)
     last_name = db.Column(db.String(120), nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.Integer, nullable=False)
     subscriptions = db.relationship('Subscription', backref='users', lazy=True)
 
     @property
@@ -28,7 +27,7 @@ class Plan(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)  # Free, Basic, Pro
     price = db.Column(db.Numeric(10, 2), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.Integer, nullable=False)
     subscriptions = db.relationship('Subscription', backref='plans', lazy=True)
 
 class Subscription(db.Model):
@@ -36,15 +35,15 @@ class Subscription(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     price = db.Column(db.Numeric(10, 2), nullable=False)
     name = db.Column(db.String(50), nullable=False)
-    start_date = db.Column(db.DateTime, nullable=False, default=datetime.now)
-    end_date = db.Column(db.DateTime, nullable=False)
+    start_date = db.Column(db.Integer, nullable=False)
+    end_date = db.Column(db.Integer, nullable=False)
     is_active = db.Column(db.Boolean, nullable=False, default=True)
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     plan_id = db.Column(db.Integer, db.ForeignKey('plans.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.Integer, nullable=False)
 
     # indexes for Subscription model
     __table_args__ = (
-        db.Index("idx_user_id_created_at", "user_id", db.desc("created_at")),
+        db.Index("idx_user_id_is_active_end_date_created_at", "user_id", "is_active", "end_date", db.desc("created_at")),
     )
 

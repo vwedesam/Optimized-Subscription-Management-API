@@ -194,7 +194,7 @@ class SubscriptionTest(flask_unittest.ClientTestCase):
         assert json.get("success") == "ok"
 
 
-    def test_upgrade_subscription_existing_plan(self, client):
+    def test_upgrade_subscription_to_existing_plan(self, client):
 
         token = self.login_user(client)
         self.create_plan(client)
