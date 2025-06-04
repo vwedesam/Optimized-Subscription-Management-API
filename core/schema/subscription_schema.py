@@ -15,7 +15,7 @@ class SubscriptionSchema(ma.Schema):
     is_active = ma.Bool()
     user_id = ma.Str()
     plan_id = ma.Str()
-    created_at = ma.Str()
+    created_at = ma.Int()
 
     @post_dump
     def convert_active(self, data, **kwargs):

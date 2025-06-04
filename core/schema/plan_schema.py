@@ -10,7 +10,7 @@ class PlanSchema(ma.Schema):
     id = ma.Str()
     name = ma.Str()
     price = ma.Float()
-    created_at = ma.DateTime()
+    created_at = ma.Int()
 
 class PlanCreateSchema(ma.Schema):
     class Meta:

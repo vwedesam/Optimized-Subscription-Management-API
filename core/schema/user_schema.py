@@ -10,7 +10,7 @@ class UserSchema(ma.Schema):
     email = ma.Str()
     first_name = ma.Str()
     last_name = ma.Str()
-    created_at = ma.DateTime()
+    created_at = ma.Int()
 
 class UserRegisterSchema(ma.Schema):
     class Meta:
