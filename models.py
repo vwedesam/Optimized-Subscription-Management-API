@@ -45,5 +45,6 @@ class Subscription(db.Model):
     # indexes for Subscription model
     __table_args__ = (
         db.Index("idx_user_id_is_active_end_date_created_at", "user_id", "is_active", "end_date", db.desc("created_at")),
+        db.Index("idx_user_id_created_at_desc", "user_id", db.desc("created_at")),
     )
 

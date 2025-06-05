@@ -80,6 +80,11 @@ $ flask db migrate -m "Initial migration."  # generate an initial migration
 $ flask db upgrade # apply the changes to DB
 ```
 
+### Seed Db
+```sh
+python seed.py
+```
+
 ### API Endpoints
 1. Auth
     1. Register user -  POST `/api/auth/register-user` | PAYLOAD - `{ 'last_name', 'first_name', 'email', 'password' }`
@@ -127,10 +132,11 @@ Authorization: Bearer <token>
 
 2. **Table Indexes**
 
-    * idx_user_id_is_active_end_date_created_at(`user_id`, `is_active`, `end_date`, `created_at DESC`)
-    
-    - Used when retrieving subscription history.
-    - Used for retrieving active subscription
+    * **idx_user_id_is_active_end_date_created_at**(`user_id`, `is_active`, `end_date`, `created_at DESC`)
+    -> Used for retrieving active subscription
+
+    * **idx_user_id_created_at_desc**(`user_id`, `created_at DESC`)
+    -> Used when retrieving subscription history.
 
 3. **Optimizing Date Indexing with Timestamps**
 
@@ -170,17 +176,18 @@ Authorization: Bearer <token>
 
 ### **Optimized Index and Query Strategy**
 
-To support both **active subscription retrieval** and **subscription history with pagination**, we use a composite index:
-`(user_id, is_active, end_date, created_at DESC)`.
+To support both active subscription retrieval and subscription history pagination, i use composite indexes that align with the query filters and sort order.
 
-This allows efficient cursor-based lookups and minimizes table scans.
+The index `idx_user_id_is_active_end_date_created_at` is designed for filtering active subscriptions efficiently, while `idx_user_id_created_at_desc` supports history lookups with cursor-based pagination.
 
-Thanks to **MySQL's leftmost prefix rule**, the index can still be used for queries that only filter on:
+Thanks to **MySQL's leftmost prefix rule**, each index remains flexible—queries can still benefit from any leftmost combination of the indexed columns.
 
-* `user_id`
-* `user_id, is_active`
-* `user_id, is_active, end_date`
-* and so on—up to the full combination.
+MySQL’s query planner automatically picks the most efficient index based on the query structure and data, making these indexes interchangeable depending on the path being queried.
 
 For performance-critical paths, raw SQL is used to fully leverage index order and avoid `OFFSET`
 
+### Other Queries
+All other queries are optimized:
+- Getting a plan by `ID` uses the `primary index`.
+- Looking up a user by `email` also uses the `primary` or `unique index`.
+- Subscription lookups by `ID` use the `primary index` as well.
